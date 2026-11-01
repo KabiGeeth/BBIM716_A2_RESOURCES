@@ -1,0 +1,1022 @@
+Good afternoon,
+all. Good afternoon. So, for those of
+you wondering about the one platform to
+replace them all, I do come all the way
+from New Zealand, and I was told in
+order to keep my residency, I have to
+make one Lord of the Rings reference.
+So, I thought, let's sneak it right into
+the title, you know? One platform to
+rule, I mean, replace them all, right? Jokes aside, though,
+what I'm really going to be talking
+about today is how we essentially went from
+a bunch of systems, including a lot of
+on-premise systems, and took that all into
+Databricks. I'm going to be talking about
+how we're getting value out of that right
+now, the things we're doing right now, the
+wins we're getting. And then lastly, I'm going to be talking about essentially what are
+we doing next? What are we looking at?
+What's coming up? So I'm going to try
+and take us on that whole journey in
+these next 40 minutes, hopefully try and
+get that all in. Before I get to that,
+let me introduce myself. My name's
+Kurt Richt. I'm the Dayton Engineering
+Manager at Fonterra. Definitely different
+hairstyle back then. But I've been in the
+role for about a year and a half now. I
+specifically work in ingredients trading
+data and analytics. I've been fortunate
+enough to be in the data industry for nearly
+20 years. I've been a BI developer, I've been
+a data analyst, I've been an architect, and
+pretty much everything in between, including
+recently engineer. Now a little bit
+about Fonterra and specifically what this
+talk is, ingredients trading where this talk
+is a little bit about who we are so Fonterra
+is a dairy cooperative it's owned and
+supplied by thousands of farming families
+across New Zealand and it's really such an
+inspirational story these are farmers that
+had a can-do attitude and a wilt work
+together to become a global leader they knew
+that they could do a lot better if they
+work together to become a global leader when
+I talk about a global leader this is what
+I'm talking about. As of FY25, we had $26 billion
+revenue, and we had nearly 16,000 employees
+all across the world. We sold to
+markets from everywhere from Europe all the
+way to America and everywhere in
+between. We really are today a global leader
+in the dairy space. Honing down a
+little bit, like I said, I'm in
+ingredients and trading. I'm going to
+really try and not oversimplify this,
+but essentially we're the value
+engine of Fonterra. Our job is really
+how do we get maximum value out
+of every single drop of milk, right?
+And we do this in a couple of ways.
+You know, we look at market signals,
+customer pricing, risk insights. We
+look at what products we can make, what
+streams we can make, what channels there are.
+We look at where we're going to be
+selling to. So we get a whole bunch of information
+to try and decide what we can do with
+every single drop to get the maximum
+value out of it. So that's the ingredients
+in trading. Again, like I said, I report
+into the data analytics arm of that department,
+so we really look at all the data
+for all these teams. Cool. So like I
+said, I'm going to take you on a little
+bit of a journey, trying to take you
+where we came from. And that was
+10 years ago, just over 10
+years ago, 2015, there was a system
+called Market Analytics System, or everybody
+knows it as MAAS. It was a platform
+that was built to meet all those
+functions. We would get all the data in
+there, but it was made up of four kind
+of key components. Snaffler, custom
+bespoke software that they built.
+It had AWS Lambda, a whole bunch of
+step functions, and it was really
+designed to go and fetch data where
+there was web scraping, APIs,
+databases, file drops. Its whole role was to go and fetch the data. It would then hand the data over to
+SSIS on-prem. SSIS, you know, kind
+of predates your medallion architecture
+in some ways, so this is just a big
+massive engine of hugely huge amounts of
+transformations, right then dropped
+off again in the basement somewhere,
+there was a server sitting with
+SQL Server 2019 and we had 300
+tables plus minus sitting on that
+server, now I know 300 is not a lot, right,
+but again that goes back to SSIS, SSIS
+was this beast of a thing. Some of those
+data flows you'd open, you'd go grab
+coffee and come back and it still wouldn't
+be open, right? So a lot of that
+transformation logic was happening there.
+So you didn't have multiple tables and
+things like that. And then last at the
+end was just Power BI Fabric which is
+obviously the reporting, the end layer. We built
+some apps and that. Adjacent to this,
+so that was the MaaS system. That's
+what we called MaaS. Those things
+together made MaaS. But adjacent to
+this, we had a data science team who were
+building ML models largely on their
+laptops on their own environments trying to
+manage them through that we had an application
+team building lightweight applications
+using Python frameworks again it was taking
+this data going to Postgres and then
+building these applications
+on top of that and thirdly we had
+operational systems actually using this data so
+this was a critical system it was really
+important not only from a reporting so it wasn't
+just analytical or we actually were
+feeding data to actual operational systems. So
+it was really important, really, you know, key to the business. It being an on
+-premise system and using a
+bunch of legacy tech, it had a
+few challenges. Disjoint the data
+chain architecture, multiple points of
+failure, right? Like I said, you had all
+these different tools all trying to work
+together and some of them didn't work
+natively together, so you're trying to force
+it to work natively together. So when
+something broke, you're literally going
+back down that whole daisy chain to try
+and figure out where it broke, what's
+wrong with it, right? BAU overhead, it
+was roughly 50%. I was shocked
+yesterday if any of you caught the keynote
+where they said most companies are still
+battling with this. I think they
+said a survey was done where it was
+something like 53% is the average
+BAU overhead. I was shocked, we were seeing it at over 50%. Scaling limitations. My first week in the
+company, I remember getting on a call
+with Microsoft. I didn't know what
+was going on. I didn't know anything
+about the systems. I didn't even know
+what MaaS was. But I got a call with
+Microsoft because one of our key
+jobs was failing. We couldn't
+really throw any more resources
+at the server. It was really
+a beefy server. We're going to
+Microsoft, hey, can you help us?
+We don't know what else to
+optimize here. And eventually, we
+actually just had to kind of move
+other jobs out of the way and say, we
+can't run you now. We'll run you at a
+different time, right? So we definitely
+were starting to hit those massive
+scaling limitations. This is one that's
+haunted my whole career. Server maintenance
+backups. patching, you know, every time
+you've got an on -prem service, you've
+got to go through this once a month,
+you've got to have an engineer
+on call because you know something's
+going to break, so definitely not something you want in
+today's world. Little governance or
+data quality, and that's just native to everything
+being inside of SSIS, right? How do
+you govern that? Tahir so much logic, Tahir
+these massive packages, how do you actually
+govern that, right? So, it was just a
+native thing, and across all that
+stack, how do you govern across all of
+it? So Tahir little data quality,
+Tahir no checking. Tahir no rules or
+anything like that. Hard-coded configs,
+right? This is another thing that, as we went
+through migration, how many times we had
+to look back and go, oh, man, where did
+they get this number from? Like, did they
+just imagine it one day? Did somebody in
+business, you know? Difficult to onboard and train new engineers. Before I started,
+there was two new engineers that
+started before me. And by the time I got
+there, they had been there for a couple
+of months. They were still struggling to
+understand these systems, right? And they're
+really good. They're really smart engineers
+just because of how much complexity was
+in this whole system. Very little
+documentation. This one was very important,
+right? It also was why we had difficulty
+to onboard. But this was built by
+an external company. They came in and
+built the system. Little documentation,
+so it created a critical dependency.
+Whenever something was wrong, we had to
+go to them, right? We had to go, oh,
+please, can you help us? Please, can
+you help us, right? Again, definitely not something I subscribe to. This one was big.
+Using tools that were outside of
+support, right? The SSI's version we
+were on was actually busy being sunset.
+So whether we had moved to another
+platform or not, we would have had to do something,
+right? We had to actually migrate some
+way. And for those of you that have
+worked in migration projects, they're
+never as easy as they sound, right? So just
+change your version. No, it's easy. It
+doesn't work like that. Like I said, code
+and ML models living on
+people's laptops, completely
+unmanaged, just every data scientist
+building his own model in isolation
+on his laptop, trying to see what
+he can scrape out of the resources
+on there, you know. And there were many
+more challenges, but these were the
+main ones. These were the main
+ones that gave us pause and went,
+actually, you know what, we need to do
+something, right? So I'm going to
+talk about where we are and kind of
+what we did, right? So we acknowledge
+those challenges. Early 2024, this was before I was even there. They got a company to
+come in and go, please can you do an assessment
+of the system? please can you give
+us a third party view tell us what do you
+think about it right no surprise they
+looked at all those challenges and the many
+more and they said you guys need to get off
+the system right so their recommendation
+was get off the system so late 2024 they
+started a project they said cool let's start
+scoping this out let's see what we can do how
+can we get off this and they gave us
+essentially an option they gave us a couple of recommendations of
+platforms to go to one of them
+was Databricks at the time our central
+IT had already started moving to Databricks,
+and they were already starting to get
+a lot of benefit, right? So from us, it was
+very easy to go, well, they're already starting
+to set guidelines, they're already
+starting to set guardrails that we can
+leverage, we can use, we can adopt, right?
+So it was a very easy decision, let's
+go with Databricks. Early 2025, that's
+when I came on board, the project was
+officially started, we said, yep,
+we're going to get everything off of MaaS,
+we're going to get rid of all that,
+all those ETLs, all the SSIS, everything
+that's on-premise needs needs to go,
+needs to be done. Middle of this year,
+we had everything running inside of
+Databricks. MaaS was still around and was
+still being used. We just had a period
+where we were making sure, we were
+literally parallel running them, we
+were making sure that whatever we were
+giving to the users is right. We did a bunch
+of UAT, but everything was already running
+in Databricks. This is a cool brag. Two weeks ago, I was
+on a call with the infrastructure team
+asking them to go send somebody downstairs to
+turn off the server. Done. Kill it.
+It's done, right? That for me is a really
+impressive thing, right? Like, this
+is a project that came under budget
+and under time. And I know you say, well,
+that's quite a long time. You're in a
+bit to get it off. That's a reasonable
+long time, right? We made the
+choice right at the beginning
+that this was not going to be a
+lift and shift. We decided we're going
+to rebuild. We're going to challenge
+assumptions. We're going to ask questions
+of this data. We're going to
+look at the way we source the data.
+Where we were getting a web scrape, could
+we get an API? Where we were getting
+an API, could we get delta sharing? You
+know, we challenged all those citations. We
+went through all those sources and said,
+do we even need this data? Is the business
+even using it, right? So we built it from
+the ground up. And our core goal was to have
+everything that Maz was doing inside of
+Databricks, right? And I can say from at least
+the top three, we've completely successfully
+done that, right? All of that stuff is
+now running inside Databricks. So sourcing
+the data, moving the data through our
+Medallion architecture, getting data into
+a serving layer, it's all done in
+Databricks, right? That's what it
+looks like now. And Tahir many other
+tools that are always on the hinges of
+these things that you don't talk about,
+right, like servers and stuff like
+that. But everything has just been replaced
+by Databricks. But what does that
+mean? Like, yeah, cool, we got the data in
+Databricks. What does that mean? What does it
+mean to the business? What did they
+get from that? Well, one, our BAU
+and bug fixes is down to less than 20%.
+That was me being, I'd rather say 20
+because Tahir that one sprint that we get
+a little bit more, but it's actually
+less than 10%, and we have a lot less
+resources managing it. We no longer require
+external parties. Like, how great is that?
+We're self-sufficient. We don't need to
+be going, oh, it's broken. Please, can you
+come help us, right? Everything is managed
+by my team. We don't need external
+parties to be helping us manage
+this stuff, right? Obviously, that also
+leads to reduced cost. Data is easier to find,
+and more importantly, you can go all the
+way and track its lineage and see where
+it comes from, right? Like previously, I
+wouldn't be able to tell you where this
+table came from. I'd see this table, wouldn't
+have a clue which source it came from,
+unless I go through everything, try and
+read the XML, try and do a bunch of
+work just to find out where it came from.
+Now we've got that. It comes natively.
+We didn't have to do anything special.
+It's just out the box. Like I mentioned,
+we had all these integration points.
+We'd answer two, because Databricks
+does everything, right? It literally does
+everything. We're doing everything
+inside Databricks. Another big one,
+easy deployments and releases. We
+use data, that should be automation
+bundles, but data automation bundles,
+right, DABs. Makes it so easy to
+deploy. We came from deploying maybe once
+every two weeks, maybe once a month because
+you had so many interdependencies. We
+do deployments all the time now. It's just
+second nature. We're just short of having
+full CI/CD pipelines where they just run
+automatically, right? One of the goals
+we're getting to. project delivery time
+reduced this was a big one we actually had
+one of the consumers come up to us in our
+town hall and actually talk about how a couple
+of months ago whenever they put in a request
+it would take weeks months this is a non
+-technical he he doesn't know about database
+doesn't know he's just talking about how he
+gets his enhancements his features he says he
+was so impressed that now we're down to days
+and sometimes hours to have an enhancement
+or feature, right? Because of simplicity. Delta sharing. Whenever
+I talk to one of our partners or one of
+our producers of data, I'm straight away
+asking, do you have a delta share? We deal
+with a lot of data. Like I said, we
+had over 130 source profiles where we're
+sourcing data from. As soon as I have
+a conversation, my first thing is,
+do you have delta share? Well, I
+guess open share. But yeah, so it's
+really one of the things that we can do now
+easily to get data. We don't even have to
+build half the time. Just share it with
+us, and then we'll get it through the rest
+of the layers, right? Most important, and
+this is the one that I put a lot of value
+in. We had engineers who were excited and
+engaged, right? They weren't working on
+legacy tools. They weren't working on
+legacy platforms. They were building stuff.
+They were having fun. They were seeing how far they can push it, right? They were completely
+engaged again, from them coming
+on and trying to learn these old
+systems to come and play on Databricks,
+rather, right? And that's the one
+that I put the most value in, is just
+seeing that joy. So that's cool. We're winning.
+Databricks is great. We got all
+the data there. Doing an awesome
+job. Very happy. What now? I mean,
+we're used to doing all BAU
+and bug fix. What do we spend our
+time on now? At this point, we
+said, okay, let's stop. Let's go look at what
+the rest of Fonterra is doing, right? Let's
+go have a quick peek at what all the
+other departments are doing, right? What are
+they doing in central? finance, and all these
+other departments. And we're going to
+play you a quick video just to give
+you an example of some of the
+stuff they're doing. Fonterra has invested
+in strengthening how SharePoint, Teams,
+and Viva Engage sites are managed to ensure
+we design fit-for -purpose sites, reduce
+duplication, improve findability, and
+better manage risk. This also supports
+how we continue to embed AI into
+the way we work. But finding the
+information you need to manage
+your SharePoint sites hasn't
+always been easy. You often need to
+search across reports, guidance, and tools
+just to understand what action to take
+and where to start. The SharePoint
+Insights agent in Co-op GPT
+changes that. It gives you one
+central place to ask questions and get
+fast, clear answers, along with
+recommended actions to help you manage your
+sites effectively. The agent lives
+inside Co-op GPT, Fonterra's secure
+AI platform. It brings together
+SharePoint Insights data so you
+can quickly access the information
+you need when you need it. Getting
+started is easy. Open Co-op GPT
+in your browser, select the at
+SharePoint Insights agent, and ask
+your question. Simple. Now let's take a look at a few examples. Here is how it might
+work for a SharePoint owner wanting to find
+out what sites they own and the retention
+period assigned to each of their sites.
+Knowing their site's retention Masters to
+ensure their content is kept and disposed of
+correctly. This prompt will provide them
+with a list of site names, the site URL
+for accessing the site directly, and the
+site's retention period. They could also take
+it a step further by asking which of these
+sites require a second owner to be added to
+the site's permissions. Having at least two
+owners is a minimum requirement across
+Fonterra's SharePoint sites. Some other questions a user might like
+to ask are, which of my sites
+are inactive or rarely used,
+or do I own any sites that could
+be deleted? The agent doesn't
+just give you answers. It also suggests
+actions like adding owners or
+deleting sites. The SharePoint
+Insights agent is a fast and reliable
+starting point. But like any AI
+tool, it's important to check responses
+for accuracy, especially before
+taking action. You can also provide
+feedback using the thumbs up or
+down feature to help improve the
+agent over time. This means less
+time searching, clearer guidance
+on what to do next, and a simpler way
+to manage your SharePoint sites,
+all in one place. The SharePoint Insights agent is here to help. Open Co-op GPT,
+select the agent, and start asking your
+questions today. Cool. So Tahir two
+things I really want to draw your attention
+to in that video. One, Fonterra as a whole
+is embracing the AI and giving AI agents
+to the users, right? You would have seen
+they talked about Co -op GPT, and essentially
+that's just a kind of marketplace
+for you to go and grab whatever agents you
+need, right? So we're really embracing
+that. But the second thing is, did you
+see when all of those things returned, all
+those prompts returned, it returned genie
+space used, right? So at the back
+of this was a genie space,
+right? That's what all that
+information gets to. So we're like, cool, man, who wouldn't
+do that, right? Tell me more about
+this. So I went to ask them, well, what are
+you doing, right? And this is what
+it told me that the problem that they're
+trying to solve is they had a sprawl
+of SharePoint sites, and it was growing
+every single day, and it was
+growing rapidly, right? It's just becoming a
+really under-managed swamp of documents,
+right? Like you had SharePoint sites for
+everything, right? With this, they now
+had a way to manage it. Now to take that
+under-managed swamp and start putting some
+management delays on it, right? Start
+getting to what are the sites we own, you
+know? What can we do? You could see trends
+in site creation, so you could start
+targeting those things. You could manage
+the health. You could see
+when last has somebody been to
+this site, right? It also gave a
+whole bunch of unexpected benefits,
+which are really good, right? It
+changed behaviors. Now instead of people
+just automatically going, I don't know
+if I have a site for this, I'm just going
+to go create a new one. People are going
+to this and going, actually,
+let me check, is there a site
+for this, right? You know? Or is my
+site actually even being used? Can I
+just delete this? I don't know who uses
+documentation, or it's actually out of
+date, right? It gave people that ability
+to manage it, right? now from my side I'm
+going, that's one of the cases we spoke
+to tons like that it wasn't only one, it was
+just one of them but we spoke to a lot of
+guys doing some things I'm going, oh this
+genie space is cool what can we do
+with this I want to play with
+it so we went back to ingredients
+and trading and we said, let's
+set ourselves some goals of things we
+want to genie so we said, let's
+try and solve some problems we just put
+some generic ones on a table that we
+know comes often I said, how do we
+locate the right data sets, right?
+It's always difficult to locate
+the right data set. It's difficult to write
+or adapt SQL, Excel, Power BI queries.
+We've got a bunch of analysts constantly trying
+to do this, constantly coming to us, constantly
+asking for help. Exporting results, right? Always got to be
+exporting results. You always end up in an
+Excel or in Power BI or in something, and
+then you're doing additional analysis on
+top of it, right, to try and get the data or
+get the data right. And then you're
+building charts, right? So ultimately,
+this has got to go somewhere.
+You put it into a chart. You've done
+all this work. All that great data is
+ready in Databricks. We did all the
+work for you, but it's still going out,
+right? So we said we want to try and
+solve that problem. Another one,
+interpret results. How many times is the
+analyst literally looking at a graph
+and then trying to explain what happened
+or looking at tables trying to
+explain what happened? We want an easy way
+to be able to do that. That's a problem
+it needs to solve. And then write
+commentary, right? Same thing. You want to put
+it into a board paper. You want to put it
+into a presentation. You're Narang. You're
+sitting there going, this is what I see,
+right? or somebody's going to sing with
+it. So we're like, surely these are easy
+challenges, right? We also said some
+of the things that we want to in
+combination with that, some things we're
+hoping it'll get to or it'll be able
+to achieve, right? Ask questions in
+natural language, of course, naturally. Instantly explore
+visuals and data, right? This is about
+getting the people closer to the data,
+right? So these are the challenges
+that we said we want to see if we
+can do these things. See key insights
+highlighted, review draft commentary, reuse generated SQL, fast, thorough,
+repeatable analysis. Those things we
+said we want. And based on our talking to other
+teams, it seemed very doable. We said
+we could do that. So how do we do
+that? Well, we went and picked
+a use case. Went to business
+and we said, anybody having
+these problems? Anybody having
+any of these? Or anybody want
+any of this? Surprisingly, they
+all did. All of our business units
+had problems like that. So we went
+and we picked one. And came out our
+first use case. milk supply forecast
+obviously as part of the supply chain
+it's very important to know where your product
+how much product you're getting, where
+it's coming from we had the data
+science like I said, they built great
+models we had now moved all those models
+inside of Databricks they were all
+sitting there, they were all living
+there great, awesome but they still weren't
+getting to the people that needed them that
+information still wasn't quite make it
+the last way there so what we did we got one business
+analyst very technical business analyst
+we coached him up a little bit taught him
+about genie spaces and he sat alongside
+the business and within two weeks
+one sprint we had our first genie
+space up and running being used by
+the business and we were happy
+to just play around and just use it
+as a complete POC but within two weeks
+we had our first genie space what
+did we do with that we said that's pretty
+cool but beginners lack no way we
+can repeat that we just got lucky
+as an easy use case So we chose another one, price forecast analysis,
+right? And this is about seeing
+what the markets are doing, trying to see
+how we can get the best price for the
+milk, right? At what regions, right? So
+Tahir a lot of data. Again, a lot of
+modeling had been done. Same problems, though. The people that
+needed to use the data were struggling
+to use it, right? Heaps of data, they
+were struggling. Week later, we had
+our second use case, Genie Space, another
+Genie Space, right? We gave it to the
+business users. I'm not going to
+focus too much on those Genie Spaces.
+They're pretty cool. What's more
+meaningful to me is when I went back to
+business, I said, cool, you guys
+have had these Genie Spaces now
+for a little while. Tell me about it.
+Give me some comments. This is what came out. Genie is my new
+best friend at work. I love that. What more could
+you ask for than a comment like that? And somebody who
+resonates with that, I'm using Genie
+all the time now. That was great. I was
+like, ah, you just made my day. You're just
+trying to flatter me. It removes
+friction between curiosity and insight. This one is
+important. This one is great. I went back
+to the user that said this. He emailed
+me. He said this. Can you talk to me?
+What do you mean by that? I think
+I kind of get it, but can you maybe
+just elaborate? He said to me, what often
+happens is they'll have a hunch
+about something. They'll go, does
+this correlate? Does this have
+any impact? Is there any
+insight in this? but because of the
+amount of time and effort that could have zero
+value they wouldn't even go down that path
+right they wouldn't even start to investigate
+they would just ignore their curiosity
+or vice versa they would they would go
+down that path and they would go and
+investigate they'll do you spend plenty of time
+and effort trying to validate this and
+then it would be worth no value right it would
+have no correlation at all with genie
+they don't have that problem it gives them
+insights they can get to data really quickly
+right that They can be curious. They can
+go and see, should I invest more into this?
+Do I need to go deep in this? At least
+it gives them that beginning step so they
+have better informed whether they should
+actually spend the time. Next one. With Genie,
+within a few minutes, had the data I needed,
+tested visuals, had some generic commentary
+to review before release. He picked up
+insights that weren't initially obvious on a
+review of the tables. I want to focus
+on that last part. I'm a firm believer
+of man in the middle. I don't think
+that this is going to replace people.
+I think this works alongside
+people, right? Most of the time, a
+genius base won't know that market behaviors
+are happening because something
+halfway across the world is happening or
+somebody said something. Genius spaces
+might not have that insight. Your
+analysts know that. They'll be able
+to add to that. But if you treat
+this like a co-worker and it's going and
+finding things that you may not have
+thought of because it goes so deep into
+the data, right? It's now picking up
+things that they didn't even think to correlate,
+right? And it's changed the way they're
+actually working and thinking about things.
+and they're starting to pick up more of these
+correlations, right? Supports ad hoc analysis.
+Again, like I said, we're trying to give
+the power to the people, right? We want
+the people using the data, not to always have
+to come to an engineering team or a visualization
+team to build. Let them do some
+analysis, right? Let them play
+with the data. Prepare sound
+-based commentary to communicate
+insights clearly. Like I said, they
+were previously typing out everything they
+saw. Now they get it done for them, right?
+So for them, they can spend a lot more
+time doing that deep analysis. It's freed
+up a lot of time. So now some key
+learnings and principles that we
+took through this. Target specific
+use cases. We went for
+something small. I know me, and I know a
+lot of data engineers, we always try and
+solve world hunger. We try to go for the biggest
+thing with the most bells and whistles,
+as big as we can get. Target the
+small use cases. Let them become
+your advocates. This is spreading like
+wildfire now throughout the business because
+these guys are going, oh, look what we have,
+look what we have. Co-design alongside
+the business. This is really
+important. As soon as something
+was wrong, they were like, whoa,
+whoa, whoa, that number's
+wrong. I would have never seen it.
+I don't know the data as intimately
+as they do. Work with them. Like
+I said, we had our BA sit with them for those
+three weeks and he was literally, every
+single time he made a change, he would
+show it to them and go, what do you think
+of this? Is this the type of question you
+would ask? right? Would you call this
+something else? So, he's working
+with them, right? Not just running off and
+building and trying to build the perfect
+thing, right? This is such a
+simple concept, but it gets forgotten
+so often. Get it to a user as
+soon as possible. Allow it to iterate
+and enhance. I can't tell you how
+many projects I've been where they
+just build and build and build and build
+and build and they get to the end and the
+user's like, well, I didn't know
+what I wanted, right? It's such
+a simple concept, but it always
+gets forgotten. One thing that we did
+is we wanted an user, even in the beginning,
+we said to them, it's going to be
+terrible, it's going to be horrible, just try
+it and tell us how we can make it better.
+Get it to them quickly. Don't get them
+the finished product, build
+it with them. Acknowledge that Tahir potential for
+mistakes, right? Work to minimize
+them as much as possible, but with
+that being said, I think we've
+created a little bit of a false dichotomy
+here, right? One of the big things
+that we learned through this migration
+project is we'd have to go to people and
+go, yeah, that report you've been using for
+the last five years, the numbers have
+actually been wrong. You know, you've been
+using the wrong data. But people have this
+real image of what have been used for
+five years is right. Even though it's built
+by humans, we don't understand what happened
+in the background, it's been right.
+And AI can be wrong. It's a false dichotomy.
+They can both be equally wrong. And
+I had to do that multiple times in this
+migration project going, by the way, we're
+going to be rolling over next week, your
+report will show different numbers,
+Harish why, Harish a calculation, and
+actually explain to them that it has just been
+plain wrong, right? Leverage some of the
+great work already done by other teams
+within Fonterra. This is one that applies
+to these conferences. This is why these
+conferences are so powerful, right? You
+get to see what other people are doing. You
+get to leverage that. It's very seldom you
+have to start on a journey in the
+beginning. For us, it was the internal team.
+We could go to other departments. We could
+take their learnings. We could apply that.
+So that's why we had two gene spaces
+in three weeks, right? Never mind the big
+journey before to get there, but from
+that point, we could build really quickly
+because we had learnings from other
+people, right? And we wanted to use
+those learnings. We didn't want to start
+from scratch and try and make the
+same mistakes, right? Very important for me. Monitor usage to make
+sure that it's meeting needs. If not, go
+back to drawing board. If any of you know
+Warhammer, Tahir a concept of a
+gray pile of shame. And essentially, you
+get a bunch of mini models, you want to
+paint them, you get them ready, and then you
+put them to a corner. And then you get the
+new models and you put them to a corner. And
+you put them to a corner until you have a big
+gray pile of shame. I feel like a lot
+of organizations did this with reports. A lot of organizations were just building
+thousands and thousands of reports and nobody
+ever checked where they're actually being
+used. So then you just have this library of
+reports and yay, we have 2,000 reports, whatever
+it is, you know. I don't want to go
+down that same route. I think we should
+learn from that. I think I'm checking
+these things all the time. And these two
+workspaces that we got stood up in three weeks
+are being used nearly daily by multiple
+users, right? And I want them to be. And if
+ever they're not, I'm okay to go and say,
+let's get rid of it. I'm more than okay to say,
+let's just scrap it. Or better, why are
+you not using? Did we misbrief in the
+beginning? Is it too slow? Do you
+not trust the data? But monitor it.
+Don't let it become that gray
+pile of shame. So now where are we
+heading? I have to throw a disclaimer. This
+was obviously before all the keynote
+speeches. Some of these things, I'm definitely
+going to be playing with the new toys, so
+some of them supersede that, but kind of
+broken to three pillars. So the data engineering
+visualization, more genie spaces.
+Why wouldn't we? We're getting such
+great wins with the business as
+is. Why would we not carry on
+with that, right? We're definitely
+going to do that. But again, I don't
+want just a mass of genie spaces, right?
+So we're starting to look at things
+where we can do things smarter, like,
+you know, putting on supervisor agents
+on top, right? Attaching knowledge
+assistants, right? doing all these other
+things around it. So you don't just have
+a sprawl of genie spaces just because
+we can, right? I want them to be purposeful,
+focused. I want them to be driven by
+the business, right? Of course, the more
+wind you get, the more data people
+want, right? So we're ever-loading data,
+so we're looking at how can we
+optimize that, right? One thing we've recently
+been playing with is STP, Spark Declare
+to Pipeline, seeing how can that help us
+move through those layers? How can it
+help us transition? Like I said earlier, changing to
+OpenShares, right? It's just so easy. It's
+so quick, and more and more of our
+producers who are having to connect to APIs
+or other sources are coming to us
+going, hey, by the way, we've got a delta
+share now, right? Do you want to use that? Definitely something we'd like to move
+more towards. I talked about
+those three blocks. The last one that
+we haven't quite got right is getting
+rid of Power BI. That's still there,
+still being used quite throughout
+the organization, but we are already
+starting to move all the logic out of
+the fabric warehouses into Databricks.
+We're already saying, like, let's
+make Databricks do all the heavy lifting.
+I really, really want to get the
+AI BI dashboards, but it's not
+quite there. We're playing with
+metric views now. They're just not
+there, but it's definitely something
+that I'm pushing towards. Again,
+I want one platform that looks
+after everything all the way through.
+No need to go out. And of course, we're
+playing with all the agents. What data
+team in today's world isn't, right? So
+literally all of them. The next pillar,
+and this is the one I'm super
+excited about, right, is the trading
+applications. So like I said in the beginning,
+we've got guys building applications.
+They're building in lightweight
+Python frameworks. It's again sitting
+on Postgres. We've got all
+this capability in Databricks now, right? So first thing we
+said is these apps have a lot of heavy
+lifting. They're doing a lot of
+data stuff, right? We need to move all
+of that to Databricks. It doesn't make sense.
+We've got infinite scale, infinite compute.
+Why are we trying to do it in this a
+little app that has no scaling or very low
+scaling or very difficult or costly scaling,
+right? So the first thing we're doing is
+moving all of that logic into Databricks
+for the applications. We're also starting
+to migrate some of the apps that actually
+run in Databricks, right? You've seen
+how much stuff in the keynotes is about
+Databricks apps. I'm a big fan of this. Me and my team are
+building a lot more apps and we're
+starting to see how we can link them all
+together and things like that. But some of
+those applications have already been
+built. We recognize that we've got all
+the data there let's tackle the next problem.
+Those applications are not necessarily
+up to scratch. At the very least, if
+I achieve nothing else, I want to get those
+applications pointing to Lakehouse. I would
+much rather have them all inside of Databricks
+using Lakehouse, but at the very least, if
+we're going to have them in Azure and they
+need to sit there, why not use Lakehouse? You
+have one RBAC model. You don't need to
+maintain many RBAC models. You don't need to
+maintain infrastructure as code. You've got it
+all built in, right? So why not use
+Lakehouse? So that's one of the things that I'm
+very keen on doing. And then the last
+one is our data science and
+machine learning. Like I said, it came
+from guys literally working on their
+laptops locally. We now have all
+models in Databricks. We're migrating
+them all to MLflow. Tahir one or two we
+still have to do, but all our new models
+are being built in Databricks. They're
+all being built in the MLflow framework. We
+had to get that stood up. And this all
+happened natively while we were doing the mass
+migration. We were building all these
+capabilities in the background, right? It
+wasn't a deliverable, but it was happening
+in the background. Like I said, we
+may not be there to replace Power
+BI, but any of our models that we're
+building now, we're chucking a
+namespace or AI BI dashboard on top of
+it straight there and then, right? So
+you've got that visualization, so you
+can see those models and you can see the
+results quick and easy, getting it to the
+people that matter. You would have seen
+in the talk this morning, if you watched
+the keynote, it, talked about how ML, the
+need for it has gone up, I think it was
+50x or something like that. We're experiencing
+that. We have a lot of people wanting
+more and more models, right? We don't have
+the largest team. So we're resorting
+down to how can we start vibe coding
+these models? How can we start using these
+frontier models, start building our
+own ML models, right? And super excited to
+take back to the ML team when I go back all
+the stuff that's come out of the keynotes
+this morning, right? What is our end
+goal, though? Largely my end goal,
+right? Where do I want to achieve? What
+do I want to achieve? That. Doesn't matter if a user wants an application, a dashboard, a genie
+space, an agent. Shouldn't matter. You should have
+one place that you go to. What would
+you like to know? Go there, ask it, it
+gives you the answer, right? And it's
+not an unachievable goal. It's really
+achievable today, right? We've got most
+of the groundwork for that. But
+that's my end goal. It doesn't matter
+who you are in the business,
+you can go there and you can get
+your answers. Just want to give a big shout-out to the team. I've tried to
+condense what we've done into
+40 minutes. The real value or the
+real exciting part is the how. And I'm more
+than happy to talk to anybody about it. But
+if you meet any of these people or you
+reach out to any of them, These are the people
+that made it happen, right? They would be
+also more than happy to talk the how and
+get into nitty-gritty, very smart people. There is two other
+people that aren't on here that we definitely
+could not have done it without, and
+that's our Databricks account executive
+and our architect, Will and Dean. Without them, I've
+been on so many calls going,
+hey, guys, we're stuck on this.
+How do we do this? Most of the time, it
+was a case of either Will, the architect,
+rent off and built it, or Dean was saying
+oh just wait there will be a
+future next week that solves that
+problem right so yeah but big shout
+out to them definitely couldn't have been
+done without them and that's all
+for me and I think we're pretty
+close in time
